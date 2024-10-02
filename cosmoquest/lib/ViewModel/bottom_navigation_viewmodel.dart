@@ -1,7 +1,10 @@
 import 'package:cosmoquest/Utils/apis.dart';
 import 'package:cosmoquest/view/Auth/Profile.dart';
+import 'package:cosmoquest/view/ExoplanetDiscover/habitable_zone_view.dart';
 import 'package:cosmoquest/view/Game/GameHome.dart';
-import 'package:cosmoquest/view/Game/Leaderboard.dart';
+import 'package:cosmoquest/view/Leaderboard/Leaderboard.dart';
+import 'package:cosmoquest/view/Game/game_level_map.dart';
+import 'package:cosmoquest/view/Game/leaderboard_new.dart';
 import 'package:cosmoquest/view/Game/levels_map.dart';
 import 'package:flutter/material.dart';
 
@@ -15,6 +18,7 @@ class BottomNavigationViewModel extends ChangeNotifier {
 
   static const List<Widget> _widgetOptions = <Widget>[
     LevelMapScreen(),
+    PlanetView(),
     LeaderboardPage(),
     UserProfile()
   ];

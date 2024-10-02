@@ -2,13 +2,15 @@ import 'package:cosmoquest/Model/Game%20_2/level_model.dart';
 import 'package:cosmoquest/view/Game_2/Screens/GameScreen.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
-  // final String videoLink;
+  final String videoPath;
   final LevelModel level;
 
-  const VideoPlayerScreen({super.key, required this.level});
+  const VideoPlayerScreen({super.key, required this.level, required this.videoPath});
 
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
@@ -19,18 +21,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   VideoPlayerController? _controller;
   bool _isLoading = true;
   bool _isPlaying = false;
+  Future<void>? _initializeVideoPlayerFuture;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    // link = getVideoUrl().toString();
     _initializeVideoPlayer();
   }
 
-  String link = "https://firebasestorage.googleapis.com/v0/b/cosmoquest-c6268.appspot.com/o/game%2Fvideo?alt=media&token=d20800f9-1250-4739-a336-d7a4ec41440c";
-
   Future<void> _initializeVideoPlayer() async {
+    String link = await getVideoUrl();
     // Initialize the video player with the video URL
+    _initializeVideoPlayerFuture = _controller?.initialize().then((_) {
+      setState(() {}); // Ensure the first frame is shown
+    });
     _controller = VideoPlayerController.networkUrl(Uri.parse(link))
       ..addListener(() {
         setState(() {}); // Update the UI
@@ -46,9 +52,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     _isPlaying = true;
   }
 
-  Future<String> getVideoUrl(String videoPath) async {
+  Future<String> getVideoUrl() async {
     try {
-      String downloadURL = await FirebaseStorage.instance.ref(videoPath).getDownloadURL();
+      String downloadURL = await FirebaseStorage.instance.ref(widget.videoPath).getDownloadURL();
+      // print(downloadURL);
       return downloadURL;
     } catch (e) {
       print("Error fetching video URL: $e");
@@ -58,49 +65,64 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose(); // Clean up the controller
+    // Restore the orientation to portrait when leaving the screen
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    _controller?.dispose();
     super.dispose();
   }
 
+  // Switch to landscape
+  void _enterFullScreen() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+  }
+
+  // Switch back to portrait
+  void _exitFullScreen() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading ? const CircularProgressIndicator() :
-      Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller!.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  VideoPlayer(_controller!),
-                  // ClosedCaption(text: _controller?.value.caption.text),
-                  _ControlsOverlay(controller: _controller!),
-                  VideoProgressIndicator(_controller!, allowScrubbing: true),
-                ],
-              ),
+      body: _isLoading ? Center(child: Lottie.asset(width: 100, height: 100,
+          'assets/Animations/videoLoaing.json')) :
+      Center(
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          child: AspectRatio(
+            aspectRatio: _controller!.value.aspectRatio,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: <Widget>[
+                VideoPlayer(_controller!),
+                ClosedCaption(
+                  text: _controller?.value.caption.text,
+                  textStyle: TextStyle(fontSize: 20, color: Colors.white, backgroundColor: Colors.black12.withOpacity(0.1)),
+                ),
+                _ControlsOverlay(controller: _controller!, onFullScreenToggle: () {
+                  if (_controller!.value.isPlaying) {
+                    _enterFullScreen();
+                  } else {
+                    _exitFullScreen();
+                  }
+                },),
+                VideoProgressIndicator(_controller!, allowScrubbing: true),
+                // _PlayPauseOverlay(controller: _controller!),
+              ],
             ),
           ),
-          // Spacer(),
-          // ElevatedButton(onPressed: (){
-          //   Navigator.push(context, MaterialPageRoute(builder: (context) => GamesScreen(level: widget.level)));
-          // }, child: Text("Next"))
-        ],
+        ),
       ),
 
-      // AspectRatio(aspectRatio: _controller!.value.aspectRatio,
-      //   child: Stack(
-      //     alignment: Alignment.bottomCenter,
-      //     children: [
-      //       VideoPlayer(_controller!),
-      //       _ControlsOverlay(controller: _controller!),
-      //       _buildVideoControls()
-      //     ],
-      //   ),
-      // )
     );
   }
 
@@ -150,7 +172,8 @@ class FullScreenVideoPlayer extends StatelessWidget {
   }}
 
 class _ControlsOverlay extends StatelessWidget {
-  const _ControlsOverlay({required this.controller});
+  final VoidCallback onFullScreenToggle;
+  const _ControlsOverlay({required this.controller, required this.onFullScreenToggle});
 
   static const List<Duration> _exampleCaptionOffsets = <Duration>[
     Duration(seconds: -10),
@@ -259,6 +282,52 @@ class _ControlsOverlay extends StatelessWidget {
               child: Text('${controller.value.playbackSpeed}x'),
             ),
           ),
+        ),
+        Align(
+          alignment: Alignment.bottomRight,
+          child: IconButton(
+            icon: const Icon(Icons.fullscreen),
+            onPressed: onFullScreenToggle,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlayPauseOverlay extends StatelessWidget {
+  const _PlayPauseOverlay({super.key, required this.controller});
+
+  final VideoPlayerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 50),
+          reverseDuration: const Duration(milliseconds: 200),
+          child: controller.value.isPlaying
+              ? const SizedBox.shrink()
+              : Container(
+            color: Colors.black26,
+            child: const Center(
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 100.0,
+              ),
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            if (controller.value.isPlaying) {
+              controller.pause();
+            } else {
+              controller.play();
+            }
+          },
         ),
       ],
     );

@@ -1,10 +1,5 @@
-
 import 'package:cosmoquest/view/Auth/LoginScreen.dart';
 import 'package:flutter/material.dart';
-
-import 'package:provider/provider.dart';
-import '../ViewModel/home_viewmodel.dart';
-
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,104 +8,81 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
-  late HomeViewModel _viewModel;
-
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = Provider.of<HomeViewModel>(context, listen: false);
-    _viewModel.initAnimation(this);
-  }
-
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
+class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
+    // Get device size for responsive UI
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
     return Scaffold(
       body: Stack(
         children: [
-          Consumer<HomeViewModel>(
-            builder: (context, viewModel, child) {
-              return AnimatedBuilder(
-                animation: viewModel.animation,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: viewModel.animation.value,
-                    child: Container(
-                      height: MediaQuery.of(context).size.height,
-                      decoration: const BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage('assets/Background/home.jpg'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Container(
-                        color: Colors.black.withOpacity(0.3),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+          // Background image
+          Container(
+            height: height,
+            width: width,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/Background/home.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              color: Colors.black.withOpacity(0.3), // Dark overlay for contrast
+            ),
           ),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              double width = constraints.maxWidth;
-              double height = constraints.maxHeight;
-              return Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: width * 0.05, vertical: height * 0.1),
-                child: Align(
+          // SafeArea ensures that the layout respects system bars
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Align(
                   alignment: Alignment.center,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      SizedBox(
-                        height: height * 0.2,
-                        child: const Text(
-                          "Welcome To",
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      // Welcome Text
+                      const Spacer(flex: 1,),
+                      const Text(
+                        "Welcome To",
+                        style: TextStyle(
+                          fontSize: 34,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(
-                        height: height * 0.2,
-                        width: width * 0.4,
-                        child: Image.asset('assets/images/Astronaut.png'),
-                      ),
-                      const SizedBox(height: 10),
-                      const SizedBox(
-                        child: Text(
-                          "Exoplanet Explorers",
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                      // Logo and title
+                      const Spacer(flex: 1,),
+                      Column(
+                        children: [
+                          SizedBox(
+                            width: width * 0.6, // Responsive logo size
+                            child: Image.asset('assets/Icons/Logo.png'),
                           ),
-                        ),
-                      ),
-                      const SizedBox(
-                        child: Text(
-                          "Beyond Earth Learning",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          const Text(
+                            "Exoplanet Explorers",
+                            style: TextStyle(
+                              fontSize: 34,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
+                          const Text(
+                            "Beyond Earth Learning",
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: Colors.white,
+                              // fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Expanded(child: SizedBox()),
+                      // Spacer to push elements towards the bottom
+                      const Spacer(flex: 3),
+                      // Start Exploring button
                       Container(
                         width: width * 0.6,
-                        height: height * 0.07,
+                        height: 55,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             begin: Alignment.centerLeft,
@@ -134,10 +106,10 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(30),
                             ),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
+                              const Text(
                                 'Start Exploring',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -145,16 +117,22 @@ class _HomeState extends State<Home> with SingleTickerProviderStateMixin {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              Icon(Icons.arrow_right_alt, color: Colors.white),
+                              const SizedBox(width: 10),
+                              SizedBox(
+                                width: 25,
+                                child: Image.asset(
+                                    'assets/Icons/right derection.png'),
+                              ),
                             ],
                           ),
                         ),
                       ),
+                      const Spacer(flex: 3),
                     ],
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ],
       ),

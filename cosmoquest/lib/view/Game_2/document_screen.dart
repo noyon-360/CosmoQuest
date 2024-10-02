@@ -1,25 +1,38 @@
+
+
 import 'package:cosmoquest/Model/Game%20_2/level_model.dart';
-import 'package:cosmoquest/view/Game_2/Screens/ExoplanetBuilderScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/MatchingGameScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/MemoryGameScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/PuzzleChallengeScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/SpaceAdventureGameScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/TriviaQuizScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:cosmoquest/Utils/Game_2/game_contants.dart';
-
-class DocumentScreen extends StatelessWidget {
+class DocumentScreen extends StatefulWidget {
   final LevelModel level;
-  const DocumentScreen({super.key, required this.level});
+  final String link;
+
+  const DocumentScreen({super.key, required this.level, required this.link});
+
+  @override
+  _DocumentScreenState createState() => _DocumentScreenState();
+}
+
+class _DocumentScreenState extends State<DocumentScreen> {
+  late final WebViewController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted) // Enable JavaScript
+      ..loadRequest(Uri.parse(widget.link)); // Load the URL
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      body: WebViewWidget(controller: _controller),
     );
   }
 }
+
 
 // class GamesScreen extends StatelessWidget {
 //   final LevelModel level;

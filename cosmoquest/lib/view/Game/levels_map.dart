@@ -1,16 +1,14 @@
 import 'package:cosmoquest/Model/Game%20_2/level_model.dart';
+import 'package:cosmoquest/Model/user_progress.dart';
 import 'package:cosmoquest/Utils/Game_2/levels_data.dart';
-import 'package:cosmoquest/view/Game_2/Screens/ExoplanetBuilderScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/MatchingGameScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/PuzzleChallengeScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/SpaceAdventureGameScreen.dart';
-import 'package:cosmoquest/view/Game_2/Screens/TriviaQuizScreen.dart';
-import 'package:cosmoquest/view/Game_2/document_screen.dart';
+import 'package:cosmoquest/Utils/SnackbarUtil.dart';
+import 'package:cosmoquest/view/ExoplanetDiscover/exoplanet_discover.dart';
+import 'package:cosmoquest/view/ExoplanetDiscover/habitable_zone_view.dart';
+import 'package:cosmoquest/view/Game/container_dot_line.dart';
+import 'package:cosmoquest/view/Game/game_level_map.dart';
 import 'package:cosmoquest/view/Game_2/learning_screen.dart';
-import 'package:cosmoquest/view/Video/video_player.dart';
+import 'package:cosmoquest/view/Map%20Containers/container_list.dart';
 import 'package:flutter/material.dart';
-
-import '../Game_2/Screens/MemoryGameScreen.dart';
 
 class LevelMapScreen extends StatefulWidget {
   const LevelMapScreen({super.key});
@@ -20,238 +18,348 @@ class LevelMapScreen extends StatefulWidget {
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
-  List<bool> levelLocks = List.generate(20, (index) => true); // All levels start locked
+  List<bool> levelLocks =
+      List.generate(20, (index) => true); // All levels start locked
+  List<int> ratings = List.generate(20, (index) => 0);
 
-  // Function to handle tap on a level
+  late TransformationController _controller;
+
+
+
+  double _scale = 5.0; // Set your initial scale here
+
+  // _controller = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProgress();
+    _controller = TransformationController();
+
+    // Use Future.delayed to ensure the build is complete before applying the initial transform
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerImage();
+    });
+    // Use Future.delayed to ensure the build is complete before applying the initial transform
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _centerUserLevel();
+    // });
+    _controller.value = Matrix4.identity()..scale(_scale);
+  }
+
+  Future<void> _loadUserProgress() async {
+    final userProgress = UserProgressLocalStore();
+    int currentLevel = await userProgress.getLevel() ?? 0;
+    List<int> savedRating = await userProgress.getRating();
+
+    setState(() {
+      levelLocks = List.generate(20, (index) => index > currentLevel);
+      ratings = savedRating;
+    });
+  }
+
+  // Center the view on the current user's level
+  void _centerUserLevel() {
+    int currentLevelIndex = levelLocks.indexWhere((unlocked) => !unlocked);
+    if (currentLevelIndex == -1) currentLevelIndex = 0; // Fallback to first level
+
+    // Get the positions of the levels
+    final positions = [
+      const Offset(0.24, 0.57), // level 1
+      const Offset(0.44, 0.56), // level 2
+      const Offset(0.34, 0.50), // level 3
+      const Offset(0.34, 0.43), // level 4
+      const Offset(0.21, 0.44), // level 5
+      const Offset(0.29, 0.40), // level 6
+      const Offset(0.48, 0.384), // level 7
+      const Offset(0.49, 0.46), // level 8
+      const Offset(0.54, 0.53), // level 9
+      const Offset(0.65, 0.47), // level 10
+      const Offset(0.65, 0.60), // level 11
+      const Offset(0.74, 0.41), // level 12
+      const Offset(0.78, 0.35), // level 13
+      const Offset(0.62, 0.33), // level 14
+      const Offset(0.78, 0.29), // level 15
+      const Offset(0.66, 0.26), // level 16
+      const Offset(0.49, 0.26), // level 17
+      const Offset(0.42, 0.33), // level 18
+      const Offset(0.24, 0.25), // level 19
+      const Offset(0.20, 0.33), // level 20
+    ];
+
+    // Get the position of the current level
+    Offset currentLevelPosition = positions[currentLevelIndex];
+
+    // Get the size of the screen to calculate translation
+    Size screenSize = MediaQuery.of(context).size;
+
+    // Translate the image to center the user's current level
+    Offset initialOffset = Offset(
+      -(currentLevelPosition.dx * screenSize.width - screenSize.width / 2),
+      -(currentLevelPosition.dy * screenSize.height - screenSize.height / 2),
+    );
+
+    // Apply the scale and translation to the transformation controller
+    _controller.value = Matrix4.identity()
+      ..scale(_scale)
+      ..translate(initialOffset.dx, initialOffset.dy);
+  }
+
+  Future<void> _resetLevels() async {
+    final userProgressLocalStore = UserProgressLocalStore();
+    final userProgressFireStore = UserProgressFireStore();
+
+    await userProgressLocalStore.resetProgress();
+    await userProgressFireStore.resetProgress();
+
+    setState(() {
+      levelLocks = List.generate(
+          20, (index) => index != 0); // Unlock the first level (index 0) only
+    });
+
+    SnackBarUtil.showSnackbar(
+        context, 'Levels have been reset. Only the first level is unlocked.');
+  }
+
+
+  // void _centerImage() {
+  //   // Get the screen size
+  //   Size screenSize = MediaQuery.of(context).size;
+  //
+  //   // Desired focus point on the image (Offset(0.24, 0.57)) relative to the image size
+  //   Offset focusPoint = const Offset(-0.50, 0.57);
+  //
+  //   // Calculate the scaled position of the focus point
+  //   double scaledFocusX = focusPoint.dx * screenSize.width * _scale;
+  //   double scaledFocusY = focusPoint.dy * screenSize.height * _scale;
+  //
+  //   // Calculate the translation needed to center the focus point on the screen
+  //   double translateX = screenSize.width / 2 - scaledFocusX;
+  //   double translateY = screenSize.height / 2 - scaledFocusY;
+  //
+  //   // Apply the scale and translation to the transformation controller
+  //   _controller.value = Matrix4.identity()
+  //     ..scale(_scale)
+  //     ..translate(translateX, translateY);
+  // }
+
+
+  void _centerImage() {
+    // Get the size of the image and the device screen
+    double initialScale = 2.5; // Define your initial scale here
+    Size screenSize = MediaQuery.of(context).size;
+
+    // Translate the image to center it on the screen
+    // Set the initial offset to center the image in the viewport
+    Offset initialOffset =
+        Offset(-screenSize.width / 4, -screenSize.height / 4);
+
+    // Apply the scale and translation to the transformation controller
+    _controller.value = Matrix4.identity()
+      ..scale(initialScale)
+      ..translate(initialOffset.dx, initialOffset.dy);
+  }
+
   void _onLevelTap(int index) {
     if (!levelLocks[index]) {
       List<LevelModel> levels = getLevelsData();
-      LevelModel currentLevel = levels[index]; // Get the level data
+      LevelModel currentLevel = levels[index];
 
-      // Navigate to the learning part (video or document)
-      if (currentLevel.learningType == "video") {
+
+      // Check if the level has learning parts
+      if (currentLevel.learningParts.isNotEmpty) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            // builder: (context) => VideoPlayerScreen(currentLevel.learningContent),
-            builder: (context) => LearningScreen(learningContent: currentLevel.learningContent, level: currentLevel),
+            builder: (context) => LearningScreen(
+              level: currentLevel,
+            ),
           ),
         );
-      } else if (currentLevel.learningType == "document") {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LearningScreen(learningContent: currentLevel.learningContent, level: currentLevel),
-          ),
-        );
+      } else {
+        SnackBarUtil.showSnackbar(context, 'No learning content available for this level.');
       }
-
-      // After learning, navigate to the games based on the current level's games
-      // for (String game in currentLevel.games) {
-      //   switch (game) {
-      //     case "Trivia Quiz":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => TriviaQuizScreen()),
-      //       );
-      //       break;
-      //     case "Matching Game":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => MatchingGameScreen()),
-      //       );
-      //       break;
-      //     case "Puzzle Challenge":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => PuzzleChallengeScreen()),
-      //       );
-      //       break;
-      //     case "Memory Game":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => MemoryGameScreen()),
-      //       );
-      //       break;
-      //     case "Exoplanet Builder":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => ExoplanetBuilderScreen()),
-      //       );
-      //       break;
-      //     case "Space Adventure Game":
-      //       Navigator.push(
-      //         context,
-      //         MaterialPageRoute(builder: (context) => SpaceAdventureGameScreen()),
-      //       );
-      //       break;
-      //     default:
-      //       print("Unknown game: $game");
-      //   }
-      // }
     } else {
-      setState(() {
-        levelLocks[index] = false; // Unlock level
-      });
+      SnackBarUtil.showSnackbar(context, 'Level ${index + 1} is locked.');
     }
   }
 
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-    //   appBar: AppBar(
-    //   title: const Text('Game Levels'),
-    // ),
-    //   bottomNavigationBar: BottomAppBar(
-    //     color: const Color(0xff3C2D4E), // A deep space-like purple
-    //     shape: const CircularNotchedRectangle(), // Adds a floating effect to the buttons
-    //     notchMargin: 8.0,
-    //     child: Padding(
-    //       padding: const EdgeInsets.symmetric(vertical: 10.0),
-    //       child: Row(
-    //         mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //         children: [
-    //           IconButton(
-    //             icon: Icon(Icons.filter_1_rounded, color: Colors.white),
-    //             onPressed: () {
-    //               // Navigate to Levels screen
-    //             },
-    //             tooltip: 'Levels',
-    //             iconSize: 28,
-    //           ),
-    //           IconButton(
-    //             icon: Icon(Icons.leaderboard, color: Colors.white),
-    //             onPressed: () {
-    //               // Navigate to Leaderboard screen
-    //             },
-    //             tooltip: 'Leaderboard',
-    //             iconSize: 28,
-    //           ),
-    //           IconButton(
-    //             icon: Icon(Icons.person_outline, color: Colors.white),
-    //             onPressed: () {
-    //               // Navigate to Profile screen
-    //               Navigator.push(context, MaterialPageRoute(builder: (context) => const UserProfile()));
-    //             },
-    //             tooltip: 'Profile',
-    //             iconSize: 28,
-    //           ),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
+    return SafeArea(
+      child: Scaffold(
+        drawer: Drawer(),
+        appBar: AppBar(),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            double imageWidth = constraints.maxWidth;
+            double imageHeight = constraints.maxHeight;
 
-      body: Stack(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/Background/BG Level.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              color: Colors.black.withOpacity(0.3), // Dark overlay for better text contrast
-            ),
-          ),
-          InteractiveViewer(
-            panEnabled: true, // Enable panning
-            boundaryMargin: const EdgeInsets.all(100), // Adds some margins for panning
-            minScale: 1.0, // Minimum zoom scale
-            maxScale: 2.0, // Maximum zoom scale
-            child: Stack(
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/Background/Game Level.png'),
-                      // fit: BoxFit.cover,
+            // Define the positions of the level buttons
+            //- x +, - y +
+            final positions = [
+              const Offset(0.24, 0.57), //level 1
+              const Offset(0.44, 0.56), // level 2
+              const Offset(0.34, 0.50), // level 3
+              const Offset(0.34, 0.43), // level 4
+              const Offset(0.21, 0.44), // level 5
+              const Offset(0.29, 0.40), // level 6
+              const Offset(0.48, 0.384), // level 7
+              const Offset(0.49, 0.46), // level 8
+              const Offset(0.54, 0.53), // level 9
+              const Offset(0.65, 0.47), // level 10
+              const Offset(0.65, 0.60), // level 11
+              const Offset(0.74, 0.41), // level 12
+              const Offset(0.78, 0.35), // level 13
+              const Offset(0.62, 0.33), // level 14
+              const Offset(0.78, 0.29), // level 15
+              const Offset(0.66, 0.26), // level 16
+              const Offset(0.49, 0.26), // level 17
+              const Offset(0.42, 0.33), // level 18
+              const Offset(0.24, 0.25), // level 19
+              const Offset(0.20, 0.33), // level 20
+            ];
+
+            // Scale positions based on the image size
+            final scaledPositions = positions
+                .map((position) =>
+                    Offset(position.dx * imageWidth, position.dy * imageHeight))
+                .toList();
+
+            return InteractiveViewer(
+              panEnabled: true,
+              minScale: 2.0,
+              maxScale: 7.0,
+              transformationController: _controller,
+              child: SizedBox(
+                width: imageWidth, // Use calculated image width
+                height: imageHeight, // Use calculated image height
+                child: Stack(
+                  children: [
+                    Image.asset(
+                      'assets/Background/Level Map BG.jpg',
+                      width: imageWidth, // Set the width of the image
+                      height: imageHeight, // Set the height of the image
+                      fit: BoxFit.cover, // Ensure the image covers the container
                     ),
-                  ),
-                ),
-                // Level buttons positioned manually based on image coordinates
-                Positioned(
-                  left: 47,
-                  top: 491,
-                  child: _buildLevelButton(0), // Level 1
-                ),
-                Positioned(
-                  left: 100,
-                  top: 480,
-                  child: _buildLevelButton(1), // Level 2
-                ),
-                Positioned(
-                  left: 152,
-                  top: 470,
-                  child: _buildLevelButton(2), // Level 3
-                ),
-                Positioned(
-                  left: 201,
-                  top: 460,
-                  child: _buildLevelButton(3), // Level 4
-                ),
-                Positioned(
-                  left: 255,
-                  top: 450,
-                  child: _buildLevelButton(4), // Level 5
-                ),
-                // Continue positioning buttons for other levels similarly...
-                Positioned(
-                  left: 310,
-                  top: 430,
-                  child: _buildLevelButton(5), // Level 6
-                ),
-                Positioned(
-                  left: 370,
-                  top: 220,
-                  child: _buildLevelButton(6), // Level 7
-                ),
-                Positioned(
-                  left: 420,
-                  top: 180,
-                  child: _buildLevelButton(7), // Level 8
-                ),
-                Positioned(
-                  left: 470,
-                  top: 140,
-                  child: _buildLevelButton(8), // Level 9
-                ),
-                Positioned(
-                  left: 520,
-                  top: 100,
-                  child: _buildLevelButton(9), // Level 10
-                ),
-              ],
-            ),
-          ),
-        ],
+                    // Level buttons positioned manually based on image coordinates
 
+                    Positioned(
+                      left: 0.159 * imageWidth - (60 / 2),
+                      top: 0.58 * imageHeight - (60 / 2),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          child: Image.asset('assets/Containers/1.1.png'),
+                        ),
+                      ),
+                    ),
+
+                    // Positioned(
+                    //   left: 0.20 * imageWidth ,
+                    //   top: 0.33 * imageHeight ,
+                    //   child: SizedBox(
+                    //     width: 40,
+                    //     height: 40,
+                    //     child: FittedBox(
+                    //       fit: BoxFit.fill,
+                    //       child: Image.asset('assets/containers/19.png'),
+                    //     ),
+                    //   ),
+                    // ),
+                    // Add CustomPaint to draw dotted lines between positions
+                    CustomPaint(
+                      size: Size(imageWidth, imageHeight),
+                      painter: DottedLinePainter(scaledPositions),
+                    ),
+
+                    for (int i = 0; i < positions.length; i++)
+                      Positioned(
+                        left: positions[i].dx * imageWidth - (60 / 2),
+                        // Center horizontally
+                        top: positions[i].dy * imageHeight - (60 / 2),
+                        // Center vertically
+                        child: Column(
+                          children: [
+                            _buildRatingStars(i),
+                            _buildLevelButton(i),
+                          ],
+                        )
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  // Widget to build level buttons
+  Widget _buildOtherBG(int index) {
+    return Stack(
+      children: [otherContainers[index]],
+    );
+  }
+
+  Widget _buildRatingStars(int index) {
+    int levelRating = ratings[index];
+    // final iconSize =
+    //     imageWidth * 0.05; // Adjust star size relative to image width
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: List.generate(3, (starIndex) {
+        return Icon(
+          Icons.star,
+          color: starIndex < levelRating ? Colors.yellow : Colors.grey,
+          size: starIndex == 1 ? 12 : 9,
+        );
+      }),
+    );
+  }
+
   Widget _buildLevelButton(int index) {
+    // final circleRadius =
+    //     imageWidth * 0.04; // Circle radius as a percentage of image width
+    // final iconSize =
+    //     imageWidth * 0.04; // Icon size as a percentage of image width
+
     return GestureDetector(
       onTap: () => _onLevelTap(index),
-      child: CircleAvatar(
-        radius: 15,
-        backgroundColor: Colors.white30,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(levelLocks[index] ? Icons.lock : null, color: Colors.white, size: 15,),
-            // Positioned(
-            //   bottom: -10,
-            //   child: Text(
-            //     '${index + 1}',
-            //     style: const TextStyle(fontSize: 24, color: Colors.white),
-            //   ),
-            // ),
-          ],
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+              width: 60,
+              child: containers[index]),
+          Icon(levelLocks[index] ? Icons.lock : null,
+              color: Colors.white, size: 15),
+        ],
       ),
+      // CircleAvatar(
+      //   radius: 15,
+      //   backgroundColor: Colors.transparent,
+      //   child: Stack(
+      //     alignment: Alignment.center,
+      //     children: [
+      //       containers[index],
+      //       Icon(levelLocks[index] ? Icons.lock : null, color: Colors.white, size: 15),
+      //
+      //     ],
+      //   ),
+      // ),
     );
   }
 }

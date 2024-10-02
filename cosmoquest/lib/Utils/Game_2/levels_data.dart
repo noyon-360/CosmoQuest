@@ -1,35 +1,65 @@
 import 'package:cosmoquest/Model/Game%20_2/level_model.dart';
 import 'package:cosmoquest/Utils/Game_2/game_contants.dart';
+import 'package:cosmoquest/Utils/apis.dart';
 
 List<LevelModel> getLevelsData() {
   return [
     LevelModel(
       levelNumber: 1,
-      learningType: "video",
-      learningContent: "https://example.com/video1.mp4", // Example URL for video
+      title: "What is an Exoplanet?",
+      subtitle: "Definition and basic understanding of exoplanets.",
+      learningParts: [
+        LearningPart(
+          type: "video",
+          content: "/game/level_1/Level 1 _ learning.mp4",
+        ),
+        LearningPart(
+          type: "document",
+          content: "https://www.nasa.gov/documents-and-reports/",
+        ),
+      ],
       games: [
         GameTypes.triviaQuiz,
-        GameTypes.puzzleChallenge,
       ],
     ),
+
     LevelModel(
       levelNumber: 2,
-      learningType: "document",
-      learningContent: "/assets/docs/level2.pdf", // Example path for document
-      games: [
-        GameTypes.memoryGame,
-        GameTypes.exoplanetBuilder,
+      title: "The Solar System vs. Exoplanetary Systems",
+      subtitle: "Comparison of our solar system with exoplanetary systems.",
+      learningParts: [
+        LearningPart(
+          type: "video",
+          content: "/game/level_1/We Bee - Personal - Microsoft​ Edge 2024-09-11 11-41-27.mp4",
+        ),
+        LearningPart(
+          type: "nasa_document",
+          content: "https://api.nasa.gov/planetary/apod?api_key=${Apis.nasaApi}",
+        ),
       ],
-    ),
-    LevelModel(
-      levelNumber: 3,
-      learningType: "video",
-      learningContent: "https://example.com/video3.mp4",
       games: [
         GameTypes.matchingGame,
-        GameTypes.spaceAdventureGame,
       ],
     ),
-    // Add more levels here...
+
+    LevelModel(
+      levelNumber: 3,
+      title: "Methods of Exoplanet Detection",
+      subtitle: "Detailed explanations of detection methods.",
+      learningParts: [
+        LearningPart(
+          type: "video",
+          content: "/game/level_1/We Bee - Personal - Microsoft​ Edge 2024-09-11 11-41-27.mp4",
+        ),
+        LearningPart(
+          type: "document",
+          content: "https://www.nasa.gov/documents-and-reports/",
+        ),
+      ],
+      games: [
+        GameTypes.triviaQuiz,
+      ],
+    ),
+
   ];
 }

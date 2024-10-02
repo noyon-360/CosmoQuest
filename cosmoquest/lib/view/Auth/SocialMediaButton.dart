@@ -21,41 +21,40 @@ class SocialMediaButton extends StatelessWidget {
         elevation: 5,
       ),
       child: Container(
-        height: 50,
-        // width: 100,
+        // height: 50,
+        // width: width,
         decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 8,
-              spreadRadius: 2,
-            ),
-          ],
           borderRadius: BorderRadius.circular(25), // add a rounded corner
         ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: width * 0.05),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                iconPath,
-                width: 28,
-                height: 28,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Image.asset(
+                  iconPath,
+                  width: 28,
+                  height: 28,
+                ),
               ),
-              const SizedBox(width: 10), // add some space between the icon and the text
-              const Text(
-                "Google",
+            ),
+            const SizedBox(width: 10), // Add some space between the icon and the text
+            Align(
+              alignment: Alignment.center,
+              child: const Text(
+                "Continue with Google",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue, // change the text color to blue
+                  color: Colors.black87, // Change the text color to blue
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+
       ),
     );
   }
