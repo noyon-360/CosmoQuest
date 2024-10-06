@@ -1,6 +1,6 @@
-# CosmoQuest 🌌
+# Exoplanet Explorer 🌌
 
-CosmoQuest is a fun, educational mobile application that combines learning about space with interactive games. Users can explore content from NASA, participate in quizzes, match planets, and keep track of their progress on a leaderboard. The app is built using **Flutter** and integrates with **Firebase** for real-time data and user authentication.
+Exoplanet Explorer is a fun, educational mobile application that combines learning about space with interactive games. Users can explore content from NASA, participate in quizzes, match planets, and keep track of their progress on a leaderboard. The app is built using **Flutter** and integrates with **Firebase** for real-time data and user authentication.
 
 ## Features 🚀
 
