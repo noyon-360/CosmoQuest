@@ -28,8 +28,6 @@ We're excited to share our vision for future enhancements in **Exoplanet Explore
   <img src="https://github.com/user-attachments/assets/407a4558-7775-40c2-9f00-f408bb697ae6" alt="2820774-01" height="200" />
 </div>
 
-Add some images of the application here.
-
 ## In Development
 
 We're actively working on bringing the following exciting games to **Exoplanet Explorer**:
