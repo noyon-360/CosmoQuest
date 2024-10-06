@@ -23,6 +23,11 @@ We're excited to share our vision for future enhancements in **Exoplanet Explore
 
 ## Screenshots 📸
 
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 300px;">
+   <img src="https://github.com/user-attachments/assets/3e6cbe15-42eb-4670-ac61-40a4354444b4" alt="kup (6)" height="200" />
+  <img src="https://github.com/user-attachments/assets/407a4558-7775-40c2-9f00-f408bb697ae6" alt="2820774-01" height="200" />
+</div>
+
 Add some images of the application here.
 
 ## In Development
