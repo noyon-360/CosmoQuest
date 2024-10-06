@@ -17,10 +17,9 @@ Exoplanet Explorer is a fun, educational mobile application that combines learni
 We're excited to share our vision for future enhancements in **Exoplanet Explorer**:
 
 - **AI-Generated Quizzes**:
-   - **Dynamic Quiz Generation**: The application will use AI algorithms to create personalized quizzes based on user preferences, learning history, and performance metrics.
-   - **User Database**: Each quiz attempt will be saved in the user database, allowing us to track individual progress and performance over time.
-   - **Correct Answers Tracking**: The application will store the correct answers alongside the user responses.
-   - **Feedback Mechanism**: After each quiz, users will receive feedback highlighting their correct answers and areas for improvement.
+   - **Dynamic Quiz Generation**: AI algorithms will create personalized quizzes tailored to user preferences, learning history, and performance metrics.
+   - **Progress and Answer Tracking**: Each quiz attempt will be saved in the user database, storing both user responses and correct answers to monitor progress over time.
+   - **Feedback Mechanism**: After each quiz, users will receive feedback highlighting correct answers and areas for improvement.
 
 ## Screenshots 📸
 
