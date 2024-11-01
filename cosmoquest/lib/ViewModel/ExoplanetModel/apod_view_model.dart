@@ -1,5 +1,6 @@
 // viewmodel/apod_view_model.dart
 import 'package:cosmoquest/Model/ExoplanetModel/APODDataModel.dart';
+import 'package:cosmoquest/Utils/apis.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -19,7 +20,7 @@ class APODViewModel extends ChangeNotifier {
     notifyListeners();
 
     final response = await http.get(
-      Uri.parse('https://api.nasa.gov/planetary/apod?start_date=2023-01-01&end_date=2024-01-01&api_key=bLPwyL9IDLbirQypKMcX9HcGPo1MhRIVcwBFzeRa'),
+      Uri.parse('https://api.nasa.gov/planetary/apod?api_key=${Apis.nasaApi}'),
     );
 
     if (response.statusCode == 200) {

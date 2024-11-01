@@ -1,25 +1,30 @@
+import 'dart:async';
 import 'dart:math';
-
 import 'package:cosmoquest/Model/Game%20_2/level_model.dart';
-import 'package:flame/game.dart';
+import 'package:cosmoquest/Model/user_progress.dart';
+import 'package:cosmoquest/ViewModel/GameQuiz/MatchingGameViewModel.dart';
+import 'package:cosmoquest/view/Auth/BottomNavigationBar.dart';
+import 'package:cosmoquest/view/Game/NextLevel.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class MatchingGameScreen extends StatefulWidget {
-  const MatchingGameScreen({super.key});
+  final LevelModel level;
+
+  const MatchingGameScreen({super.key, required this.level});
 
   @override
   State<MatchingGameScreen> createState() => _MatchingGameScreenState();
 }
 
-class _MatchingGameScreenState extends State<MatchingGameScreen> {
-
+class _MatchingGameScreenState extends State<MatchingGameScreen>
+    with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    currentPlanet = planetNames[Random().nextInt(planetNames.length)];
+    generateNewOptions();
   }
 
-  // List of planet names and their corresponding images
   final List<String> planetNames = [
     'Mercury',
     'Venus',
@@ -29,8 +34,6 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     'Saturn',
     'Uranus',
     'Neptune',
-    // 'Pluto',
-    // 'Sun',
   ];
 
   final Map<String, String> planetImages = {
@@ -42,18 +45,89 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     'Saturn': 'assets/images/Planet-_Saturn.png',
     'Uranus': 'assets/images/Planet-_Uranus.png',
     'Neptune': 'assets/images/Planet-_Neptune.png',
-    // 'Pluto': 'assets/containers/1.png',
-    // 'Sun': 'assets/containers/1.png',
   };
 
-  // This will hold the current planet being dragged
   String? currentPlanet;
-
-  // To track matched results
+  List<String> currentOptions = [];
   Map<String, bool> results = {};
+  Map<String, Color> optionColors = {}; // Track colors for temp options
+  List<String> shownPlanets = [];
 
-  // To track the offset of the draggable image
-  Offset? _offset;
+  void generateNewOptions() {
+    if (shownPlanets.length < planetNames.length) {
+      List<String> remainingPlanets =
+          planetNames.where((p) => !shownPlanets.contains(p)).toList();
+      currentPlanet =
+          remainingPlanets[Random().nextInt(remainingPlanets.length)];
+      shownPlanets.add(currentPlanet!);
+
+      List<String> tempOptions = List.from(planetNames)..remove(currentPlanet!);
+      tempOptions.shuffle();
+      currentOptions = [currentPlanet!, ...tempOptions.take(3)].toList();
+      currentOptions.shuffle();
+
+      optionColors = {
+        for (var option in currentOptions) option: Colors.grey[200]!,
+      };
+    } else {
+      currentPlanet = null;
+      showFinalResults();
+    }
+  }
+
+  int _calculateRating(int correctAnswers) {
+    // Simple example of rating calculation, modify as needed
+    if (correctAnswers >= 6) return 3;
+    if (correctAnswers >= 4) return 2;
+    return 1;
+  }
+
+  Future<void> checkForNextLevel(
+      BuildContext context, int levelId, int correctAnswers, int rating) async {
+    bool passed = correctAnswers >= 6;
+    final userProgressLocalStore = UserProgressLocalStore();
+    final userProgressFireStore = UserProgressFireStore();
+
+    int currentLevel = levelId - 1;
+    print(currentLevel);
+    if (passed) {
+      await userProgressLocalStore.saveLevel(currentLevel + 1);
+      await userProgressFireStore.saveLevel(currentLevel + 1);
+    }
+
+    await userProgressLocalStore.saveRating(currentLevel, rating);
+    await userProgressFireStore.saveRatingAndScore(
+        currentLevel, rating, correctAnswers);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => NextLevelScreen(
+          passed: passed,
+          rating: rating,
+          onNextLevel: () =>
+              _navigateTo(context, const BottomNavigationBarHome()),
+          onRetry: () => _navigateTo(context, const BottomNavigationBarHome()),
+        ),
+      ),
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget screen) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+      (route) => false, // Removes all previous routes
+    );
+  }
+
+  void showFinalResults() {
+    int correct = results.values.where((v) => v == true).length;
+
+    checkForNextLevel(
+        context, widget.level.levelNumber, correct, _calculateRating(correct));
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,44 +137,70 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
       ),
       body: Column(
         children: [
+          // Planet Name Options Section
           Expanded(
             flex: 1,
             child: ListView.builder(
-              itemCount: planetNames.length,
+              itemCount: currentOptions.length,
               itemBuilder: (context, index) {
-                String planet = planetNames[index];
-                return DragTarget<String>(
-                  builder: (context, candidateData, rejectedData) {
-                    return Container(
-                      margin: EdgeInsets.all(8.0),
-                      padding: EdgeInsets.all(8.0),
-                      color: results[planet] == true
-                          ? Colors.green
-                          : results[planet] == false
-                          ? Colors.red
-                          : Colors.grey[200],
-                      child: Text(
-                        planet,
-                        style: TextStyle(fontSize: 20),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                  onWillAccept: (data) => true,
-                  onAccept: (data) {
-                    setState(() {
-                      if (data == planet) {
-                        results[planet] = true;
-                      } else {
-                        results[planet] = false;
-                      }
-                      getNextPlanet();
-                    });
-                  },
+                String planet = currentOptions[index];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  child: DragTarget<String>(
+                    builder: (context, candidateData, rejectedData) {
+                      return AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: optionColors[planet],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(2, 2),
+                            ),
+                          ],
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            planet,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    },
+                    onWillAccept: (data) => true,
+                    onAccept: (data) {
+                      setState(() {
+                        if (data == currentPlanet && planet == currentPlanet) {
+                          optionColors[planet] = Colors.green;
+                          results[currentPlanet!] = true;
+                        } else {
+                          optionColors[planet] = Colors.red;
+                          results[currentPlanet!] = false;
+                        }
+                        // Delay before showing new options
+                        Future.delayed(Duration(seconds: 1), () {
+                          setState(() {
+                            generateNewOptions();
+                          });
+                        });
+                      });
+                    },
+                  ),
                 );
               },
             ),
           ),
+
+          // Draggable Planet Image Section
           Expanded(
             flex: 1,
             child: Stack(
@@ -110,75 +210,34 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                     alignment: Alignment.center,
                     child: Draggable<String>(
                       data: currentPlanet,
-                      feedback: Image.asset(
-                        planetImages[currentPlanet]!,
-                        width: 100,
-                        height: 100,
+                      feedback: Transform.scale(
+                        scale: 1.2,
+                        child: Image.asset(
+                          planetImages[currentPlanet!]!,
+                          width: 120,
+                          height: 120,
+                        ),
                       ),
                       childWhenDragging: Opacity(
                         opacity: 0.5,
                         child: Image.asset(
-                          planetImages[currentPlanet]!,
+                          planetImages[currentPlanet!]!,
                           width: 100,
                           height: 100,
                         ),
                       ),
-                      child: GestureDetector(
-                        onPanUpdate: (details) {
-                          setState(() {
-                            _offset = Offset(_offset?.dx ?? 0 + details.delta.dx, _offset?.dy ?? 0 + details.delta.dy);
-                          });
-                        },
-                        child: Image.asset(
-                          planetImages[currentPlanet]!,
-                          width: 100,
-                          height: 100,
-                        ),
+                      child: Image.asset(
+                        planetImages[currentPlanet!]!,
+                        width: 100,
+                        height: 100,
                       ),
-                      onDragEnd: (details) {
-                        setState(() {
-                          _offset = null;
-                          getNextPlanet();
-                        });
-                      },
                     ),
                   ),
               ],
             ),
           ),
-
-          ElevatedButton(
-            onPressed: () {
-              int correct = results.values.where((v) => v == true).length;
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('Results'),
-                  content: Text('You matched $correct/${planetNames.length} planets correctly!'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            },
-            child: Text('Check Results'),
-          ),
         ],
       ),
     );
-  }
-
-  void getNextPlanet() {
-    if (results.length < planetNames.length) {
-      List<String> remainingPlanets = planetNames.where((p) => !results.containsKey(p)).toList();
-      currentPlanet = remainingPlanets[Random().nextInt(remainingPlanets.length)];
-    } else {
-      currentPlanet = null; // No more planets to match
-    }
   }
 }

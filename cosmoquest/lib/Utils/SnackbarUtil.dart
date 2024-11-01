@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SnackBarUtil {
   // General method to show a SnackBar from anywhere in the app
   static void showSnackbar(BuildContext context, String message,
-      {Color backgroundColor = Colors.redAccent,
+      {Color backgroundColor = Colors.white,
         SnackBarBehavior behavior = SnackBarBehavior.floating,
         int durationInSeconds = 3}) {
     // Display the SnackBar using ScaffoldMessenger

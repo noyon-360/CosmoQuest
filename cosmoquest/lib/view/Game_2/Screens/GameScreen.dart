@@ -71,7 +71,7 @@ class GamesScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const MatchingGameScreen(),
+                            builder: (context) => MatchingGameScreen(level: level,),
                           ),
                         );
                       },

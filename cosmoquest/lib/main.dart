@@ -2,6 +2,7 @@ import 'package:cosmoquest/Service/no_internet_page.dart';
 import 'package:cosmoquest/Service/network_controller.dart';
 import 'package:cosmoquest/Utils/Color/colors.dart';
 import 'package:cosmoquest/ViewModel/ExoplanetModel/apod_view_model.dart';
+import 'package:cosmoquest/ViewModel/GameQuiz/MatchingGameViewModel.dart';
 import 'package:cosmoquest/ViewModel/GameQuiz/quiz_view_model.dart';
 import 'package:cosmoquest/ViewModel/Game_2/learning_viewmodel.dart';
 import 'package:cosmoquest/ViewModel/Leaderborad/leaderboard_view_model.dart';
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
           ChangeNotifierProvider(create: (_) => LearningViewModel()),
           ChangeNotifierProvider(create: (_) => LeaderboardViewModel()),
           ChangeNotifierProvider(create: (_) => APODViewModel()),
+          ChangeNotifierProvider(create: (_) => MatchingGameViewModel()),
         ],
         child: GetMaterialApp(
           debugShowCheckedModeBanner: false,

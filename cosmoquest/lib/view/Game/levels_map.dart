@@ -8,6 +8,7 @@ import 'package:cosmoquest/view/Game/container_dot_line.dart';
 import 'package:cosmoquest/view/Game/game_level_map.dart';
 import 'package:cosmoquest/view/Game_2/learning_screen.dart';
 import 'package:cosmoquest/view/Map%20Containers/container_list.dart';
+import 'package:cosmoquest/view/syllabus_drawer.dart';
 import 'package:flutter/material.dart';
 
 class LevelMapScreen extends StatefulWidget {
@@ -194,9 +195,11 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   @override
   @override
   Widget build(BuildContext context) {
+    final List<LevelModel> levels = getLevelsData();
+
     return SafeArea(
       child: Scaffold(
-        drawer: Drawer(),
+        drawer: SyllabusDrawer(),
         appBar: AppBar(),
         body: LayoutBuilder(
           builder: (context, constraints) {

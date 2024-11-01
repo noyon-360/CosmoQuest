@@ -1,8 +1,14 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:cosmoquest/Model/ExoplanetModel/PlanetModel.dart';
+import 'package:cosmoquest/Model/Nasa/article_model.dart';
+import 'package:cosmoquest/Service/Nasa/image_loading.dart';
+import 'package:cosmoquest/Service/Nasa/nasa_service.dart';
+import 'package:cosmoquest/Utils/apis.dart';
 import 'package:cosmoquest/ViewModel/ExoplanetModel/habitable_view_model.dart';
+import 'package:cosmoquest/ViewModel/Nasa/nasa_documnet_view_model.dart';
 import 'package:cosmoquest/view/ExoplanetDiscover/apod_page.dart';
+import 'package:cosmoquest/view/Nasa/nasa_document.dart';
 import 'package:cosmoquest/view/Web/WebsiteView.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -160,7 +166,8 @@ class _PlanetViewState extends State<PlanetView> {
                   Expanded( // Use Expanded to fill remaining space
                     child: TabBarView(
                       children: [
-                        _buildPlanetsTab(), // Content for the 'Planets' tab
+                        NasaArticle(),
+                        // _buildPlanetsTab(), // Content for the 'Planets' tab
                         _buildExoplanetsTab(), // Content for the 'Exoplanets' tab
                         APODPage(), // Content for the 'NASA Image' tab
                       ],
@@ -400,3 +407,79 @@ class _PlanetViewState extends State<PlanetView> {
     return Container();
   }
 }
+
+class NasaArticle extends StatefulWidget {
+  const NasaArticle({super.key});
+
+  @override
+  _NasaArticleState createState() => _NasaArticleState();
+}
+
+class _NasaArticleState extends State<NasaArticle> {
+  Article? articleData;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNasaArticle();
+  }
+
+  Future<void> _loadNasaArticle() async {
+    try {
+      NasaDocument data = NasaDocument(apiUrl: "https://api.nasa.gov/planetary/apod?api_key=${Apis.nasaApi}");
+      setState(() {
+        articleData = data as Article?;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("Error loading article: $e");
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    if (articleData == null) {
+      return Center(child: Text('Failed to load article'));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            articleData!.title,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          Image.network(articleData!.url),
+          const SizedBox(height: 16),
+          Text(
+            'Date: ${articleData!.date}',
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Copyright: ${articleData!.copyright}',
+            style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            articleData!.explanation,
+            style: TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+

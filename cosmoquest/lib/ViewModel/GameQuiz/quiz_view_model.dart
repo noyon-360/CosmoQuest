@@ -1,5 +1,5 @@
 // lib/ViewModel/QuizViewModel.dart
-import 'package:audioplayers/audioplayers.dart';
+
 import 'package:cosmoquest/Model/quiz_rating_model.dart';
 import 'package:cosmoquest/Model/user_progress.dart';
 import 'package:cosmoquest/ViewModel/GameQuiz/QuizQuestion.dart';
@@ -40,7 +40,7 @@ class QuizViewModel extends ChangeNotifier {
     _selectedAnswer = List<String?>.filled(questions.length, null);
     _currentQuestionIndex = 0;
     correctAnswers = 0;
-    _rating = QuizRating();
+    // _rating = QuizRating();
     notifyListeners();
   }
 
@@ -62,9 +62,14 @@ class QuizViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isCorrectAnswer(String selectedOption) {
+    return currentQuestion.correctAnswer == selectedOption;
+  }
+
   bool isSelected(String options) {
     return _selectedAnswer[_currentQuestionIndex] == options;
   }
+
 
   bool isOptionSelected () {
     return _selectedAnswer[_currentQuestionIndex] != null;
@@ -100,7 +105,6 @@ class QuizViewModel extends ChangeNotifier {
 
     await checkForNextLevel(context, level);
   }
-
 
 
   Future<void> answerQuestion(String answer, level, BuildContext context) async {

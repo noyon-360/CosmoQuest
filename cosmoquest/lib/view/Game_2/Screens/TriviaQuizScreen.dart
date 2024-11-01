@@ -89,6 +89,7 @@ class _TriviaQuizScreenState extends State<TriviaQuizScreen> {
             const SizedBox(height: 20),
 
             // Options Container
+            // Options Container
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -99,12 +100,24 @@ class _TriviaQuizScreenState extends State<TriviaQuizScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: quizViewModel.currentQuestion.options.map((option) {
                   final isSelected = quizViewModel.isSelected(option);
+                  final isCorrect = quizViewModel.isCorrectAnswer(option);
                   return ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected ? Colors.deepPurple.shade300 : Colors.white24,
+                      backgroundColor: isSelected
+                          ? isCorrect ? Colors.green : Colors.red
+                          : Colors.white24,
                     ),
                     onPressed: () {
                       quizViewModel.selectAnswer(option);
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (quizViewModel.isOptionSelected()) {
+                          if (quizViewModel.currentQuestionIndex < quizViewModel.questions.length - 1) {
+                            quizViewModel.nextQuestion();
+                          } else {
+                            quizViewModel.submitQuiz(context, widget.level.levelNumber);
+                          }
+                        }
+                      });
                     },
                     child: Text(
                       option,
@@ -118,77 +131,77 @@ class _TriviaQuizScreenState extends State<TriviaQuizScreen> {
             const SizedBox(height: 20),
 
             // Navigation Buttons
-            Row(
-              children: [
-                if (quizViewModel.currentQuestionIndex > 0)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurpleAccent,
-                      ),
-                      onPressed: quizViewModel.previousQuestion,
-                      label: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_back_ios, color: Colors.white),
-                          SizedBox(width: 10,),
-                          const Text("Previous", style: TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                    ),
-                  ),
-                SizedBox(width: 10,),
-                if (quizViewModel.currentQuestionIndex < quizViewModel.questions.length - 1)
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurpleAccent,
-                      ),
-                      onPressed: () {
-                        if (quizViewModel.isOptionSelected()) {quizViewModel.nextQuestion();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Please select an option before proceeding.'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      label: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text("Next", style: TextStyle(color: Colors.white)),
-                          SizedBox(width: 10,),
-                          Icon(Icons.arrow_forward_ios, color: Colors.white)
-                        ],
-                      ),
-                    ),
-                  ),
-                if (quizViewModel.currentQuestionIndex == quizViewModel.questions.length - 1)
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                      onPressed: () {
-                        if (quizViewModel.isOptionSelected()) {
-                          quizViewModel.submitQuiz(context, widget.level.levelNumber);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please select an option before submitting.'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text("Submit", style: TextStyle(color: Colors.white)),
-                    ),
-                  ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     if (quizViewModel.currentQuestionIndex > 0)
+            //       Expanded(
+            //         child: ElevatedButton.icon(
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: Colors.deepPurpleAccent,
+            //           ),
+            //           onPressed: quizViewModel.previousQuestion,
+            //           label: Row(
+            //             mainAxisAlignment: MainAxisAlignment.center,
+            //             children: [
+            //               Icon(Icons.arrow_back_ios, color: Colors.white),
+            //               SizedBox(width: 10,),
+            //               const Text("Previous", style: TextStyle(color: Colors.white)),
+            //             ],
+            //           ),
+            //         ),
+            //       ),
+            //     SizedBox(width: 10,),
+            //     if (quizViewModel.currentQuestionIndex < quizViewModel.questions.length - 1)
+            //       Expanded(
+            //         child: ElevatedButton.icon(
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: Colors.deepPurpleAccent,
+            //           ),
+            //           onPressed: () {
+            //             if (quizViewModel.isOptionSelected()) {quizViewModel.nextQuestion();
+            //             } else {
+            //               ScaffoldMessenger.of(context).showSnackBar(
+            //                 const SnackBar(
+            //                   content: Text(
+            //                       'Please select an option before proceeding.'),
+            //                   backgroundColor: Colors.red,
+            //                 ),
+            //               );
+            //             }
+            //           },
+            //           label: Row(
+            //             mainAxisAlignment: MainAxisAlignment.center,
+            //             children: [
+            //               const Text("Next", style: TextStyle(color: Colors.white)),
+            //               SizedBox(width: 10,),
+            //               Icon(Icons.arrow_forward_ios, color: Colors.white)
+            //             ],
+            //           ),
+            //         ),
+            //       ),
+            //     if (quizViewModel.currentQuestionIndex == quizViewModel.questions.length - 1)
+            //       Expanded(
+            //         child: ElevatedButton(
+            //           style: ElevatedButton.styleFrom(
+            //             backgroundColor: Colors.green,
+            //           ),
+            //           onPressed: () {
+            //             if (quizViewModel.isOptionSelected()) {
+            //               quizViewModel.submitQuiz(context, widget.level.levelNumber);
+            //             } else {
+            //               ScaffoldMessenger.of(context).showSnackBar(
+            //                 const SnackBar(
+            //                   content: Text('Please select an option before submitting.'),
+            //                   backgroundColor: Colors.red,
+            //                 ),
+            //               );
+            //             }
+            //           },
+            //           child: const Text("Submit", style: TextStyle(color: Colors.white)),
+            //         ),
+            //       ),
+            //   ],
+            // ),
           ],
         ),
       ),
